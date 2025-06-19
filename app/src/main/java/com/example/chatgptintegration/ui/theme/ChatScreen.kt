@@ -1,7 +1,3 @@
-package com.example.chatgptintegration.ui.theme // Adjust if you change the package
-
-package com.example.chatgptintegration.ui.theme
-
 // ... other imports ...
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +14,10 @@ import androidx.compose.material3.CircularProgressIndicator // Add this
 import androidx.compose.foundation.shape.RoundedCornerShape // For rounded corners
 import androidx.compose.ui.graphics.Color // For custom colors
 import androidx.compose.ui.unit.sp // For font sizes
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.platform.LocalFocusManager // For hiding keyboard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +25,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
     var inputText by remember { mutableStateOf("") }
     val messages = viewModel.messages // Observe messages
     val isLoading = viewModel.isLoading // Observe loading state
+    val focusManager = LocalFocusManager.current // Add this line
 
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -58,13 +59,21 @@ fun ChatScreen(viewModel: ChatViewModel) {
             TextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f), // Removed .onKeyEvent from here
                 placeholder = { Text("Type a message...") },
-                shape = RoundedCornerShape(20.dp), // Rounded corners for TextField
-                colors = TextFieldDefaults.textFieldColors( // Minor styling
+                shape = RoundedCornerShape(20.dp),
+                colors = TextFieldDefaults.textFieldColors(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent
-                )
+                ),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send), // Add this
+                keyboardActions = KeyboardActions(onSend = { // Add this
+                    if (inputText.isNotBlank()) {
+                        viewModel.sendMessage(inputText)
+                        inputText = ""
+                        focusManager.clearFocus() // Optionally hide keyboard
+                    }
+                })
             )
             Spacer(modifier = Modifier.width(8.dp))
             Button(
